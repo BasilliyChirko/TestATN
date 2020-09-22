@@ -60,8 +60,12 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends Base
             public void onChanged(final String address) {
                 boolean connected = address != null && !address.isEmpty();
                 findViewById(R.id.part_connected_layout).setVisibility(connected ? View.VISIBLE : View.GONE);
-                String text = getResources().getString(R.string.connected_s, address);
-                ((TextView) findViewById(R.id.part_connected_ip)).setText(text);
+                if (connected) {
+                    String text = getResources().getString(R.string.connected_s, address);
+                    ((TextView) findViewById(R.id.part_connected_ip)).setText(text);
+                } else {
+                    discoverPeers();
+                }
             }
         });
     }
