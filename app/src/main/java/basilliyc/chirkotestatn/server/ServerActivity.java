@@ -1,12 +1,19 @@
 package basilliyc.chirkotestatn.server;
 
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.text.format.Formatter;
+import android.widget.TextView;
 
 import androidx.lifecycle.ViewModelProvider;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
 import basilliyc.chirkotestatn.R;
 import basilliyc.chirkotestatn.base.BaseWorkActivity;
-import basilliyc.chirkotestatn.base.BaseWorkViewModel;
+import basilliyc.chirkotestatn.utils.Utils;
 
 public class ServerActivity extends BaseWorkActivity<ServerViewModel> {
 
@@ -15,6 +22,7 @@ public class ServerActivity extends BaseWorkActivity<ServerViewModel> {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_server);
         setUpPage();
+        foo();
     }
 
     @Override
@@ -24,7 +32,32 @@ public class ServerActivity extends BaseWorkActivity<ServerViewModel> {
 
     private void setUpPage() {
         setTitle(R.string.server_title);
+
+        ((TextView) findViewById(R.id.server_label_ip)).setText(getLocalIpAddress());
     }
 
+    private String getLocalIpAddress() {
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        return Formatter.formatIpAddress(wifiManager.getConnectionInfo().getIpAddress());
+    }
+
+    private void foo() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Utils.log("server 1");
+                    ServerSocket serverSocket = new ServerSocket(8888);
+                    Utils.log("server 2");
+                    Socket client = serverSocket.accept();
+                    Utils.log("server 3");
+                    Utils.log(client);
+                } catch (IOException e) {
+                    Utils.log("server error");
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
 
 }

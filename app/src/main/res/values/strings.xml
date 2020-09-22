@@ -5,4 +5,5 @@
     <string name="start_label_select_mode">Select Mode:</string>
     <string name="server_title">Server (Receive media)</string>
     <string name="client_title">Client (Send media)</string>
+    <string name="update_visibility">Update Visibility</string>
 </resources>

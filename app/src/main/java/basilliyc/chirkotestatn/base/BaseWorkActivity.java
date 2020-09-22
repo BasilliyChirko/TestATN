@@ -1,17 +1,24 @@
 package basilliyc.chirkotestatn.base;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Looper;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import basilliyc.chirkotestatn.R;
 import basilliyc.chirkotestatn.utils.Utils;
 
 abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppCompatActivity implements WifiP2pManager.ChannelListener {
@@ -42,10 +49,20 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
     protected abstract T createViewModel();
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
-            return true;
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            case R.id.discover_peers:
+                discoverPeers();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -64,11 +81,13 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
 
     @Override
     public void onChannelDisconnected() {
+        Utils.log("onChannelDisconnected");
         //TODO
     }
 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
+        Utils.log("onPointerCaptureChanged hasCapture=" + hasCapture);
         //TODO
     }
 
@@ -77,6 +96,7 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
     protected void onResume() {
         super.onResume();
         registerReceiver(wifiStateReceiver, wifiStateIntentFilter);
+        discoverPeers();
     }
 
     /* unregister the broadcast receiver */
@@ -88,5 +108,72 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
 
     public void onError(Throwable throwable) {
         Utils.log(throwable);
+    }
+
+    public void onWifiStateChanged() {
+
+    }
+
+    public void onWifiPeersChanged() {
+
+    }
+
+    public void onWifiConnectionChanged() {
+
+    }
+
+    public void onWifiThisDeviceChanged() {
+
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopSearchPeer();
+    }
+
+
+    protected void discoverPeers() {
+        //TODO handle permission
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Permission ACCESS_FINE_LOCATION is denied", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        wifiManager.discoverPeers(wifiChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Utils.log("discover succ");
+            }
+
+            @Override
+            public void onFailure(int reasonCode) {
+                switch (reasonCode) {
+                    case WifiP2pManager.P2P_UNSUPPORTED:
+                        onError(new Throwable("WifiP2pManager.P2P_UNSUPPORTED"));
+                        break;
+                    case WifiP2pManager.BUSY:
+                        onError(new Throwable("WifiP2pManager.BUSY"));
+                        break;
+                    default:
+                        onError(new Throwable("WifiP2pManager.ERROR"));
+                }
+
+            }
+        });
+    }
+
+    protected void stopSearchPeer() {
+        wifiManager.stopPeerDiscovery(wifiChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                //Nothing
+            }
+
+            @Override
+            public void onFailure(int i) {
+                //Nothing
+            }
+        });
     }
 }

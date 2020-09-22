@@ -30,18 +30,22 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
 
         switch (action) {
             case WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION:
+                activity.onWifiStateChanged();
                 Utils.log("WIFI_P2P_STATE_CHANGED_ACTION");
                 // Check to see if Wi-Fi is enabled and notify appropriate activity
                 break;
             case WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION:
+                activity.onWifiPeersChanged();
                 Utils.log("WIFI_P2P_PEERS_CHANGED_ACTION");
                 // Call WifiP2pManager.requestPeers() to get a list of current peers
                 break;
             case WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION:
+                activity.onWifiConnectionChanged();
                 Utils.log("WIFI_P2P_CONNECTION_CHANGED_ACTION");
                 // Respond to new connection or disconnections
                 break;
             case WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION:
+                activity.onWifiThisDeviceChanged();
                 Utils.log("WIFI_P2P_THIS_DEVICE_CHANGED_ACTION");
                 // Respond to this device's wifi state changing
                 break;

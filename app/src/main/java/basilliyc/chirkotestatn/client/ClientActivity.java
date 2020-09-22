@@ -2,10 +2,13 @@ package basilliyc.chirkotestatn.client;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
@@ -24,6 +27,8 @@ public class ClientActivity extends BaseWorkActivity<ClientViewModel> {
         setContentView(R.layout.activity_client);
         setUpPage();
         initListeners();
+
+        onWifiPeersChanged();
     }
 
     @Override
@@ -45,30 +50,32 @@ public class ClientActivity extends BaseWorkActivity<ClientViewModel> {
     }
 
     private void onClickDiscover() {
+        discoverPeers();
+    }
+
+    @Override
+    public void onWifiPeersChanged() {
+        super.onWifiPeersChanged();
+        //TODO handle permission
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Permission ACCESS_FINE_LOCATION is denied", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        wifiManager.discoverPeers(wifiChannel, new WifiP2pManager.ActionListener() {
+        Utils.log("onWifiPeersChanged");
+        wifiManager.requestPeers(wifiChannel, new WifiP2pManager.PeerListListener() {
             @Override
-            public void onSuccess() {
-                Utils.log("discover succ");
-            }
-
-            @Override
-            public void onFailure(int reasonCode) {
-                switch (reasonCode) {
-                    case WifiP2pManager.P2P_UNSUPPORTED:
-                        onError(new Throwable("WifiP2pManager.P2P_UNSUPPORTED"));
-                        break;
-                    case WifiP2pManager.BUSY:
-                        onError(new Throwable("WifiP2pManager.BUSY"));
-                        break;
-                    default:
-                        onError(new Throwable("WifiP2pManager.ERROR"));
+            public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
+                Utils.log("onPeersAvailable " + wifiP2pDeviceList.getDeviceList().size());
+                StringBuilder builder = new StringBuilder();
+                for (WifiP2pDevice device : wifiP2pDeviceList.getDeviceList()) {
+                    builder.append(device.deviceAddress);
+                    builder.append("\n");
+                    builder.append(device.deviceName);
+                    builder.append("\n");
+                    builder.append("\n");
                 }
-
+                ((TextView) findViewById(R.id.device_list)).setText(builder.toString());
             }
         });
     }
