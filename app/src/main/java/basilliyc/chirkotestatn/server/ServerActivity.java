@@ -51,21 +51,6 @@ public class ServerActivity extends BaseWorkActivity<ServerViewModel> {
         ((TextView) findViewById(R.id.server_label_ip)).setText(getLocalIpAddress());
     }
 
-//    private String getLocalIpAddress() {
-//        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-//        return Formatter.formatIpAddress(wifiManager.getConnectionInfo().getIpAddress());
-////        return wifiManager.getConnectionInfo().getMacAddress();
-//    }
-
-    private void updateLocalAddress() {
-        //TODO handle permission
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Permission ACCESS_FINE_LOCATION is denied", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-
-    }
 
     public String getLocalIpAddress() {
         try {
