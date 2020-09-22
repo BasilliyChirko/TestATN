@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import basilliyc.chirkotestatn.Constants;
 import basilliyc.chirkotestatn.R;
 import basilliyc.chirkotestatn.base.BaseWorkActivity;
 import basilliyc.chirkotestatn.utils.Utils;
@@ -30,7 +31,9 @@ public class ServerActivity extends BaseWorkActivity<ServerViewModel> {
         return new ViewModelProvider(this).get(ServerViewModel.class);
     }
 
-    private void setUpPage() {
+    @Override
+    public void setUpPage() {
+        super.setUpPage();
         setTitle(R.string.server_title);
 
         ((TextView) findViewById(R.id.server_label_ip)).setText(getLocalIpAddress());
@@ -47,7 +50,7 @@ public class ServerActivity extends BaseWorkActivity<ServerViewModel> {
             public void run() {
                 try {
                     Utils.log("server 1");
-                    ServerSocket serverSocket = new ServerSocket(8888);
+                    ServerSocket serverSocket = new ServerSocket(Constants.SOCKET_PORT);
                     Utils.log("server 2");
                     Socket client = serverSocket.accept();
                     Utils.log("server 3");

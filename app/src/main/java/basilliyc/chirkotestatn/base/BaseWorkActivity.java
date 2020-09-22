@@ -9,19 +9,20 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Looper;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.Observer;
 
 import basilliyc.chirkotestatn.R;
 import basilliyc.chirkotestatn.utils.Utils;
 
-abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppCompatActivity implements WifiP2pManager.ChannelListener {
+abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends BaseActivity implements WifiP2pManager.ChannelListener {
 
     protected WifiP2pManager wifiManager;
     protected WifiP2pManager.Channel wifiChannel;
@@ -34,16 +35,35 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         viewModel = createViewModel();
-        setUpPage();
         setUpWifi();
     }
 
-    private void setUpPage() {
+    public void setUpPage() {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowHomeEnabled(true);
         }
+        setUpPartConnectedDevice();
+    }
+
+    private void setUpPartConnectedDevice() {
+        findViewById(R.id.part_connected_disconnect).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                wifiManager.removeGroup(wifiChannel, new WifiActionListener());
+            }
+        });
+
+        viewModel.connectedDeviceAddress.observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(final String address) {
+                boolean connected = address != null && !address.isEmpty();
+                findViewById(R.id.part_connected_layout).setVisibility(connected ? View.VISIBLE : View.GONE);
+                String text = getResources().getString(R.string.connected_s, address);
+                ((TextView) findViewById(R.id.part_connected_ip)).setText(text);
+            }
+        });
     }
 
     protected abstract T createViewModel();
@@ -72,6 +92,9 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
         wifiChannel = wifiManager.initialize(this, Looper.getMainLooper(), this);
         wifiStateReceiver = new WiFiDirectBroadcastReceiver(wifiManager, wifiChannel, this);
 
+        viewModel.wifiManager = wifiManager;
+        viewModel.wifiChannel = wifiChannel;
+
         wifiStateIntentFilter = new IntentFilter();
         wifiStateIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         wifiStateIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
@@ -91,7 +114,6 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
         //TODO
     }
 
-    /* register the broadcast receiver with the intent values to be matched */
     @Override
     protected void onResume() {
         super.onResume();
@@ -99,7 +121,6 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
         discoverPeers();
     }
 
-    /* unregister the broadcast receiver */
     @Override
     protected void onPause() {
         super.onPause();
@@ -111,19 +132,19 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
     }
 
     public void onWifiStateChanged() {
-
+        viewModel.onWifiStateChanged();
     }
 
     public void onWifiPeersChanged() {
-
+        viewModel.onWifiPeersChanged();
     }
 
     public void onWifiConnectionChanged() {
-
+        viewModel.onWifiConnectionChanged();
     }
 
     public void onWifiThisDeviceChanged() {
-
+        viewModel.onWifiThisDeviceChanged();
     }
 
 
@@ -131,6 +152,7 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
     protected void onDestroy() {
         super.onDestroy();
         stopSearchPeer();
+        wifiManager.removeGroup(wifiChannel, new WifiActionListener());
     }
 
 
@@ -140,40 +162,47 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends AppC
             Toast.makeText(this, "Permission ACCESS_FINE_LOCATION is denied", Toast.LENGTH_SHORT).show();
             return;
         }
-        wifiManager.discoverPeers(wifiChannel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Utils.log("discover succ");
-            }
-
-            @Override
-            public void onFailure(int reasonCode) {
-                switch (reasonCode) {
-                    case WifiP2pManager.P2P_UNSUPPORTED:
-                        onError(new Throwable("WifiP2pManager.P2P_UNSUPPORTED"));
-                        break;
-                    case WifiP2pManager.BUSY:
-                        onError(new Throwable("WifiP2pManager.BUSY"));
-                        break;
-                    default:
-                        onError(new Throwable("WifiP2pManager.ERROR"));
-                }
-
-            }
-        });
+        wifiManager.discoverPeers(wifiChannel, new WifiActionListener());
     }
 
     protected void stopSearchPeer() {
-        wifiManager.stopPeerDiscovery(wifiChannel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                //Nothing
-            }
+        wifiManager.stopPeerDiscovery(wifiChannel, new WifiActionListener());
+    }
 
-            @Override
-            public void onFailure(int i) {
-                //Nothing
+    public class WifiActionListener implements WifiP2pManager.ActionListener {
+
+        @Override
+        public void onSuccess() {
+
+        }
+
+        @Override
+        public void onFailure(int reasonCode) {
+            switch (reasonCode) {
+                case WifiP2pManager.P2P_UNSUPPORTED:
+                    if (!onUnsupported())
+                        BaseWorkActivity.this.onError(new Throwable("WifiP2pManager.P2P_UNSUPPORTED"));
+                    break;
+                case WifiP2pManager.BUSY:
+                    if (!onBusy())
+                        BaseWorkActivity.this.onError(new Throwable("WifiP2pManager.BUSY"));
+                    break;
+                default:
+                    if (!onError())
+                        BaseWorkActivity.this.onError(new Throwable("WifiP2pManager.ERROR"));
             }
-        });
+        }
+
+        public boolean onBusy() {
+            return false;
+        }
+
+        public boolean onUnsupported() {
+            return false;
+        }
+
+        public boolean onError() {
+            return false;
+        }
     }
 }

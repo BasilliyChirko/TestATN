@@ -4,4 +4,5 @@ import basilliyc.chirkotestatn.base.BaseWorkViewModel;
 
 public class ClientViewModel extends BaseWorkViewModel {
 
+
 }
