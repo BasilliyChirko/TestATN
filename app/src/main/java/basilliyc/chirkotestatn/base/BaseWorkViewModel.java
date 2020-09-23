@@ -40,9 +40,7 @@ public class BaseWorkViewModel extends ViewModel {
         wifiManager.requestConnectionInfo(wifiChannel, new WifiP2pManager.ConnectionInfoListener() {
             @Override
             public void onConnectionInfoAvailable(final WifiP2pInfo wifiP2pInfo) {
-                connectedDeviceInfo = wifiP2pInfo;
-
-
+                onSetConnectedDeviceInfo(wifiP2pInfo);
                 compositeDisposable.add(Single.create(new SingleOnSubscribe<String>() {
                     @Override
                     public void subscribe(SingleEmitter<String> emitter) {
@@ -76,6 +74,10 @@ public class BaseWorkViewModel extends ViewModel {
 
     }
 
+    public void onSetConnectedDeviceInfo(WifiP2pInfo connectedDevice) {
+        connectedDeviceInfo = connectedDevice;
+
+    }
 
 
     @Override

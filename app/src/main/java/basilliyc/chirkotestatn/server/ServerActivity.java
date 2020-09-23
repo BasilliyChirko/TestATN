@@ -1,19 +1,8 @@
 package basilliyc.chirkotestatn.server;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
-import android.text.format.Formatter;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.io.IOException;
@@ -54,9 +43,9 @@ public class ServerActivity extends BaseWorkActivity<ServerViewModel> {
 
     public String getLocalIpAddress() {
         try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
                 NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if (!inetAddress.isLoopbackAddress()) {
                         String hostAddress = inetAddress.getHostAddress();
@@ -86,23 +75,5 @@ public class ServerActivity extends BaseWorkActivity<ServerViewModel> {
         return null;
     }
 
-    private void foo() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Utils.log("server 1");
-                    ServerSocket serverSocket = new ServerSocket(Constants.SOCKET_PORT);
-                    Utils.log("server 2");
-                    Socket client = serverSocket.accept();
-                    Utils.log("server 3");
-                    Utils.log(client);
-                } catch (IOException e) {
-                    Utils.log("server error");
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
 
 }
