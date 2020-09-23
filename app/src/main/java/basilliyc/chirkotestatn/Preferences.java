@@ -20,4 +20,13 @@ public class Preferences {
     }
 
 
+    public String getLastDir() {
+        return pref.getString("LastDir", null);
+    }
+
+    public void setLastDir(String ip) {
+        pref.edit().putString("LastDir", ip).apply();
+    }
+
+
 }

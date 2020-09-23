@@ -67,7 +67,7 @@ public class ClientActivity extends BaseWorkActivity<ClientViewModel> {
                         EditTextValidation.ErrorType.EMPTY,
                         EditTextValidation.ErrorType.INCORRECT_HOST_ADDRESS
                 );
-                viewModel.sendMedia(ip);
+                viewModel.sendMedia(ip, getApplicationContext());
             }
         });
 
@@ -111,14 +111,14 @@ public class ClientActivity extends BaseWorkActivity<ClientViewModel> {
         withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, new PermissionCallback() {
             @Override
             public void onGranted() {
-                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
-                photoPickerIntent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                Intent intent = new Intent(Intent.ACTION_PICK);
+                intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
                 if (isImage) {
-                    photoPickerIntent.setType("image/*");
+                    intent.setType("image/*");
                 } else {
-                    photoPickerIntent.setType("video/*");
+                    intent.setType("video/*");
                 }
-                startActivityForResult(photoPickerIntent, REQUEST_MEDIA);
+                startActivityForResult(intent, REQUEST_MEDIA);
             }
 
             @Override

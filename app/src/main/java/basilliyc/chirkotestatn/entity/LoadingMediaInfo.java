@@ -1,8 +1,9 @@
 package basilliyc.chirkotestatn.entity;
 
-public class SendMediaInfo {
+public class LoadingMediaInfo {
     private String fileName;
     private long fileLength;
+    private long loadingLength;
 
     public String getFileName() {
         return fileName;
@@ -20,11 +21,20 @@ public class SendMediaInfo {
         this.fileLength = fileLength;
     }
 
+    public long getLoadingLength() {
+        return loadingLength;
+    }
+
+    public void setLoadingLength(long loadingLength) {
+        this.loadingLength = loadingLength;
+    }
+
     @Override
     public String toString() {
-        return "SendMediaInfo{" +
+        return "LoadingMediaInfo{" +
                 "fileName='" + fileName + '\'' +
                 ", fileLength=" + fileLength +
+                ", loadingLength=" + loadingLength +
                 '}';
     }
 }
