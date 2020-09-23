@@ -1,7 +1,5 @@
 package basilliyc.chirkotestatn.server;
 
-import android.net.wifi.p2p.WifiP2pInfo;
-
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -23,18 +21,7 @@ public class ServerViewModel extends BaseWorkViewModel {
 
     private Disposable disposableServerSocket;
 
-    @Override
-    public void onSetConnectedDeviceInfo(WifiP2pInfo connectedDevice) {
-        super.onSetConnectedDeviceInfo(connectedDevice);
-        boolean enable = connectedDevice != null && connectedDevice.groupOwnerAddress != null;
-        if (enable) {
-            startServerSocket();
-        } else {
-            stopServerSocket();
-        }
-    }
-
-    private void startServerSocket() {
+    void startServerSocket() {
         stopServerSocket();
 
         disposableServerSocket = Completable.create(new CompletableOnSubscribe() {
@@ -76,7 +63,7 @@ public class ServerViewModel extends BaseWorkViewModel {
 
     }
 
-    private void stopServerSocket() {
+    void stopServerSocket() {
         if (disposableServerSocket != null && !disposableServerSocket.isDisposed()) {
             disposableServerSocket.dispose();
         }
