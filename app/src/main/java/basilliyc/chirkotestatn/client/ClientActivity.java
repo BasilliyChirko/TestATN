@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Bundle;
 import android.view.View;
@@ -14,11 +15,9 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import net.alhazmy13.mediapicker.Image.ImagePicker;
-import net.alhazmy13.mediapicker.Video.VideoPicker;
+import net.alhazmy13.mediapicker.FileProcessing;
 
 import java.io.File;
-import java.util.List;
 
 import basilliyc.chirkotestatn.R;
 import basilliyc.chirkotestatn.base.BaseWorkActivity;
@@ -112,18 +111,14 @@ public class ClientActivity extends BaseWorkActivity<ClientViewModel> {
         withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, new PermissionCallback() {
             @Override
             public void onGranted() {
+                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                photoPickerIntent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
                 if (isImage) {
-                    new ImagePicker.Builder(ClientActivity.this)
-                            .mode(ImagePicker.Mode.GALLERY)
-                            .directory(ImagePicker.Directory.DEFAULT)
-                            .allowMultipleImages(false)
-                            .build();
+                    photoPickerIntent.setType("image/*");
                 } else {
-                    new VideoPicker.Builder(ClientActivity.this)
-                            .mode(VideoPicker.Mode.GALLERY)
-                            .directory(VideoPicker.Directory.DEFAULT)
-                            .build();
+                    photoPickerIntent.setType("video/*");
                 }
+                startActivityForResult(photoPickerIntent, REQUEST_MEDIA);
             }
 
             @Override
@@ -153,19 +148,13 @@ public class ClientActivity extends BaseWorkActivity<ClientViewModel> {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == ImagePicker.IMAGE_PICKER_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-            List<String> mPaths = data.getStringArrayListExtra(ImagePicker.EXTRA_IMAGE_PATH);
-            if (mPaths != null && !mPaths.isEmpty()) {
-                viewModel.onMediaSelected(mPaths.get(0));
+        if (requestCode == REQUEST_MEDIA && resultCode == RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            if (uri != null) {
+                viewModel.onMediaSelected(FileProcessing.getPath(this, uri));
             }
         }
 
-        if (requestCode == VideoPicker.VIDEO_PICKER_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-            List<String> mPaths = data.getStringArrayListExtra(VideoPicker.EXTRA_VIDEO_PATH);
-            if (mPaths != null && !mPaths.isEmpty()) {
-                viewModel.onMediaSelected(mPaths.get(0));
-            }
-        }
     }
 
 
