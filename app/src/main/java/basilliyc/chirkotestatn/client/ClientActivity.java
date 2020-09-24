@@ -16,7 +16,6 @@ public class ClientActivity extends BaseWorkActivity<ClientViewModel> {
 
     private EditText inputIp;
     private Button submitClient;
-//    private PeersRecyclerAdapter peersRecyclerAdapter = new PeersRecyclerAdapter();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +43,6 @@ public class ClientActivity extends BaseWorkActivity<ClientViewModel> {
 
     private void initViews() {
         inputIp = (EditText) findViewById(R.id.input_server_ip);
-//        ((RecyclerView) findViewById(R.id.available_peers)).setAdapter(peersRecyclerAdapter);
         inputIp.setText(viewModel.getLastIp());
 
         submitClient = (Button) findViewById(R.id.conect_to_server);
@@ -62,12 +60,6 @@ public class ClientActivity extends BaseWorkActivity<ClientViewModel> {
             }
         });
 
-//        peersRecyclerAdapter.onClickItemListener = new PeersRecyclerAdapter.OnClickItemListener() {
-//            @Override
-//            public void onClickItem(WifiP2pDevice item) {
-//                inputIp.setText(item.deviceAddress);
-//            }
-//        };
     }
 
 
