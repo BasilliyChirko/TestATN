@@ -31,4 +31,6 @@
     <string name="server_status_downloading">Downloading</string>
     <string name="server_status_uploading">Uploading</string>
     <string name="server_status_connected">Connected</string>
+    <string name="stored_receive">RECEIVED</string>
+    <string name="stored_sent">SENT</string>
 </resources>

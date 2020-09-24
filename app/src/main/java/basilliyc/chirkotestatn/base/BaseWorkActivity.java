@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -17,7 +18,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
 import androidx.lifecycle.Observer;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.RecyclerView;
 
 import net.alhazmy13.mediapicker.FileProcessing;
 
@@ -27,6 +31,7 @@ import java.util.ArrayList;
 import basilliyc.chirkotestatn.Preferences;
 import basilliyc.chirkotestatn.R;
 import basilliyc.chirkotestatn.entity.LoadingMediaInfo;
+import basilliyc.chirkotestatn.entity.StoredMediaInfo;
 import basilliyc.chirkotestatn.server.SocketStatus;
 import basilliyc.chirkotestatn.utils.Error;
 import basilliyc.chirkotestatn.utils.Utils;
@@ -53,6 +58,9 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends Base
     protected Button addVideoButton;
     protected Button clearMediaButton;
     protected Button transferButton;
+
+    protected RecyclerView listStoredMedia;
+    protected StoredMediaAdapter storedMediaAdapter = new StoredMediaAdapter();
 
 
     @Override
@@ -91,17 +99,22 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends Base
 
 
     private void initView() {
-        statusLabel = ((TextView) findViewById(R.id.label_status));
-        selectedDirLabel = ((TextView) findViewById(R.id.selected_dir));
-        selectDirButton = ((Button) findViewById(R.id.select_dir));
-        loadingFileNameLabel = ((TextView) findViewById(R.id.loading_file_name));
-        loadingProgressLabel = ((TextView) findViewById(R.id.loading_file_size));
-        progressBar = ((ProgressBar) findViewById(R.id.loading_progress));
+        statusLabel = (TextView) findViewById(R.id.label_status);
+        selectedDirLabel = (TextView) findViewById(R.id.selected_dir);
+        selectDirButton = (Button) findViewById(R.id.select_dir);
+        loadingFileNameLabel = (TextView) findViewById(R.id.loading_file_name);
+        loadingProgressLabel = (TextView) findViewById(R.id.loading_file_size);
+        progressBar = (ProgressBar) findViewById(R.id.loading_progress);
         selectedMediaLabel = (TextView) findViewById(R.id.selected_media);
-        addImageButton = ((Button) findViewById(R.id.add_image));
-        addVideoButton = ((Button) findViewById(R.id.add_video));
-        clearMediaButton = ((Button) findViewById(R.id.clear_selection));
-        transferButton = ((Button) findViewById(R.id.transfer));
+        addImageButton = (Button) findViewById(R.id.add_image);
+        addVideoButton = (Button) findViewById(R.id.add_video);
+        clearMediaButton = (Button) findViewById(R.id.clear_selection);
+        transferButton = (Button) findViewById(R.id.transfer);
+        listStoredMedia = (RecyclerView) findViewById(R.id.list_stored_media);
+
+
+        listStoredMedia.setAdapter(storedMediaAdapter);
+        listStoredMedia.setItemAnimator(new DefaultItemAnimator());
     }
 
     @Override
@@ -151,7 +164,40 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends Base
                 viewModel.sendMedia(BaseWorkActivity.this.getApplicationContext());
             }
         });
+
+        storedMediaAdapter.onClickItemListener = new StoredMediaAdapter.OnClickItemListener() {
+            @Override
+            public void onClickItem(StoredMediaInfo item) {
+                Intent intent = new Intent();
+                intent.setAction(Intent.ACTION_VIEW);
+
+
+                Uri uri = FileProvider.getUriForFile(BaseWorkActivity.this, getApplicationContext().getPackageName() + ".provider", new File(item.getFilePath()));
+
+                String mime = "*/*";
+                MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+                if (mimeTypeMap.hasExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()))) {
+                    mime = mimeTypeMap.getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()));
+                }
+
+                intent.setDataAndType(uri, mime);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                startActivity(intent);
+            }
+        };
     }
+
+
+//    Uri uri = Uri.parse("content://" + item.getFilePath());
+//
+//    String mime = "*/*";
+//    MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+//                if (mimeTypeMap.hasExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()))) {
+//        mime = mimeTypeMap.getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()));
+//    }
+//
+//                intent.setDataAndType(uri, mime);
 
     public void setUpObservers() {
         viewModel.error.onEvent(this, new ActionCallLiveData.Callback<Throwable>() {
@@ -197,6 +243,21 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends Base
                     selectedMediaLabel.setText(builder.toString());
                 }
                 updateTransferButton(viewModel.socketStatus.getValue(), list);
+            }
+        });
+
+        viewModel.storedMedia.observe(this, new Observer<ArrayList<StoredMediaInfo>>() {
+            @Override
+            public void onChanged(ArrayList<StoredMediaInfo> storedMediaInfos) {
+                storedMediaAdapter.data = storedMediaInfos;
+                storedMediaAdapter.notifyDataSetChanged();
+            }
+        });
+
+        viewModel.newStoredMedia.onEvent(this, new ActionCallLiveData.Callback<StoredMediaInfo>() {
+            @Override
+            public void onEvent(StoredMediaInfo data) {
+                storedMediaAdapter.notifyItemInserted(0);
             }
         });
     }
@@ -362,12 +423,11 @@ abstract public class BaseWorkActivity<T extends BaseWorkViewModel> extends Base
             ClipData clipData = data.getClipData();
 
             if (clipData != null) {
-                int count = clipData.getItemCount(); //evaluate the count before the for loop --- otherwise, the count is evaluated every loop.
+                int count = clipData.getItemCount();
                 for (int i = 0; i < count; i++) {
                     Uri imageUri = clipData.getItemAt(i).getUri();
                     viewModel.onMediaSelected(FileProcessing.getPath(this, imageUri));
                 }
-                //do something with the image (save it to some directory or whatever you need to do with it here)
             } else if (uri != null) {
                 viewModel.onMediaSelected(FileProcessing.getPath(this, uri));
             }

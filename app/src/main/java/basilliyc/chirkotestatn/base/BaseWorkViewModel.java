@@ -23,6 +23,7 @@ import basilliyc.chirkotestatn.Preferences;
 import basilliyc.chirkotestatn.client.ClientViewModel;
 import basilliyc.chirkotestatn.entity.LoadingMediaInfo;
 import basilliyc.chirkotestatn.entity.SendMediaInfo;
+import basilliyc.chirkotestatn.entity.StoredMediaInfo;
 import basilliyc.chirkotestatn.server.SocketStatus;
 import basilliyc.chirkotestatn.utils.Error;
 import basilliyc.chirkotestatn.utils.Utils;
@@ -48,6 +49,9 @@ public class BaseWorkViewModel extends ViewModel {
 
     public MutableLiveData<File> selectedDir = new MutableLiveData<>();
     public MutableLiveData<ArrayList<File>> selectedMedia = new MutableLiveData<>(new ArrayList<File>());
+
+    public MutableLiveData<ArrayList<StoredMediaInfo>> storedMedia = new MutableLiveData<>(new ArrayList<StoredMediaInfo>());
+    public ActionCallLiveData<StoredMediaInfo> newStoredMedia = new ActionCallLiveData<>();
 
 
     protected InputStream inputStream;
@@ -197,6 +201,9 @@ public class BaseWorkViewModel extends ViewModel {
             loadingProgress.postValue(progressValue);
         }
         streamFromFile.close();
+
+        addToStoredMedia(progressValue, file.getPath(), false);
+
         loadingProgress.postValue(null);
 
         socketStatus.postValue(SocketStatus.CONNECTED);
@@ -299,11 +306,27 @@ public class BaseWorkViewModel extends ViewModel {
 
         fileOutputStream.close();
 
+        addToStoredMedia(progressValue, file.getPath(), true);
         loadingProgress.postValue(null);
         socketStatus.postValue(SocketStatus.CONNECTED);
 
     }
 
+    private void addToStoredMedia(LoadingMediaInfo loadingMediaInfo, String path, boolean isReceived) {
+        StoredMediaInfo storedMediaInfo = new StoredMediaInfo();
+        storedMediaInfo.setFileName(loadingMediaInfo.getFileName());
+        storedMediaInfo.setFileLength(loadingMediaInfo.getFileLength());
+        storedMediaInfo.setFilePath(path);
+        storedMediaInfo.setTime(System.currentTimeMillis());
+        storedMediaInfo.setReceived(isReceived);
+
+        ArrayList<StoredMediaInfo> storedMediaValue = storedMedia.getValue();
+        if (storedMediaValue == null) {
+            storedMediaValue = new ArrayList<>();
+        }
+        storedMediaValue.add(0, storedMediaInfo);
+        newStoredMedia.activate(storedMediaInfo);
+    }
 
     public void clearMedia() {
         selectedMedia.postValue(new ArrayList<File>());

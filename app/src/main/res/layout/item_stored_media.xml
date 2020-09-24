@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/spacing8">
+
+    <TextView
+        android:id="@+id/file_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="File name" />
+
+    <TextView
+        android:id="@+id/file_size"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="File size" />
+
+    <TextView
+        android:id="@+id/file_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="File time" />
+
+    <TextView
+        android:id="@+id/file_store_type"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="File store type" />
+
+</LinearLayout>
