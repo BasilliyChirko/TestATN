@@ -1,21 +1,13 @@
 package basilliyc.chirkotestatn.server;
 
-import androidx.lifecycle.MutableLiveData;
-
-import com.google.gson.Gson;
-
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
 import basilliyc.chirkotestatn.Constants;
 import basilliyc.chirkotestatn.base.BaseWorkViewModel;
-import basilliyc.chirkotestatn.entity.LoadingMediaInfo;
-import basilliyc.chirkotestatn.entity.SendMediaInfo;
 import basilliyc.chirkotestatn.utils.Error;
 import basilliyc.chirkotestatn.utils.Utils;
 import io.reactivex.Completable;
@@ -28,21 +20,15 @@ import io.reactivex.schedulers.Schedulers;
 
 public class ServerViewModel extends BaseWorkViewModel {
 
-    private Disposable disposableServerSocket;
-    public MutableLiveData<File> selectedDir = new MutableLiveData<>();
-    public MutableLiveData<ServerStatus> serverStatus = new MutableLiveData<>(ServerStatus.DIR_NOT_SELECTED);
-    public MutableLiveData<LoadingMediaInfo> loadingProgress = new MutableLiveData<>(null);
-
     private ServerSocket serverSocket;
-    private Socket client;
 
     private void startServerSocket() {
-        stopServerSocket();
+        disconnectSocket();
 
         File dir = selectedDir.getValue();
         if (dir == null) {
             onError(new Throwable(Error.DIR_NOT_SELECTED));
-            serverStatus.postValue(ServerStatus.DIR_NOT_SELECTED);
+            socketStatus.postValue(SocketStatus.DISCONNECTED);
             return;
         }
 
@@ -51,7 +37,7 @@ public class ServerViewModel extends BaseWorkViewModel {
         if (!dir.exists()) {
             onError(new Throwable(Error.DIR_NOT_EXISTS));
             selectedDir.postValue(null);
-            serverStatus.postValue(ServerStatus.DIR_NOT_SELECTED);
+            socketStatus.postValue(SocketStatus.DISCONNECTED);
             return;
         }
 
@@ -59,13 +45,15 @@ public class ServerViewModel extends BaseWorkViewModel {
             @Override
             public void subscribe(CompletableEmitter emitter) throws Exception {
                 try {
-                    processServer();
-                    emitter.onComplete();
+                    serverSocket = new ServerSocket(Constants.SOCKET_PORT);
+                    Socket client = serverSocket.accept();
+
+                    onDeviceConnected(client);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
 
                     if (throwable instanceof SocketException && "Socket closed".equals(throwable.getMessage())) {
-                        stopServerSocket();
+                        disconnectSocket();
                     } else {
                         emitter.onError(throwable);
                     }
@@ -78,21 +66,19 @@ public class ServerViewModel extends BaseWorkViewModel {
                 .subscribe(new CompletableObserver() {
                     @Override
                     public void onSubscribe(Disposable d) {
-                        disposableServerSocket = d;
+                        disposableSocket = d;
                         compositeDisposable.add(d);
-                        serverStatus.postValue(ServerStatus.WAIT_FOR_DATA);
+                        socketStatus.postValue(SocketStatus.WAIT_FOR_CLIENT);
                     }
 
                     @Override
                     public void onComplete() {
-                        loadingProgress.postValue(null);
-                        serverStatus.postValue(ServerStatus.STOPPED);
-                        startServerSocket();
+                        Utils.log("onComplete will never execute");
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        stopServerSocket();
+                        disconnectSocket();
                         ServerViewModel.this.onError(e);
                     }
                 });
@@ -100,108 +86,31 @@ public class ServerViewModel extends BaseWorkViewModel {
 
     }
 
-    void stopServerSocket() {
-        loadingProgress.postValue(null);
+    public void toggleServerSocket() {
+        if (disposableSocket != null) {
+            disconnectSocket();
+        } else {
+            startServerSocket();
+        }
+    }
 
-        if (disposableServerSocket != null && !disposableServerSocket.isDisposed()) {
-            disposableServerSocket.dispose();
+    @Override
+    public void disconnectSocket() {
+        super.disconnectSocket();
+
+        if (disposableSocket != null && !disposableSocket.isDisposed()) {
+            disposableSocket.dispose();
         }
 
-        disposableServerSocket = null;
-        serverStatus.postValue(ServerStatus.STOPPED);
+        disposableSocket = null;
+        socketStatus.postValue(SocketStatus.DISCONNECTED);
 
         try {
-            if (client != null) {
-                client.close();
-            }
-
             if (serverSocket != null) {
                 serverSocket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private void processServer() throws Throwable {
-        serverSocket = new ServerSocket(Constants.SOCKET_PORT);
-        client = serverSocket.accept();
-        serverStatus.postValue(ServerStatus.LOADING);
-        InputStream inputStream = client.getInputStream();
-
-        //read media info
-
-        StringBuilder builder = new StringBuilder();
-        int r;
-        while ((r = inputStream.read()) != -1) {
-            char ch = (char) r;
-            builder.append(ch);
-            if (ch == '}') {
-                break;
-            }
-        }
-
-        String next = builder.toString();
-        Gson gson = new Gson();
-        SendMediaInfo sendMediaInfo = gson.fromJson(next, SendMediaInfo.class);
-        Utils.log(sendMediaInfo);
-
-        File dir = selectedDir.getValue();
-        dir.mkdirs();
-        File file = new File(dir, sendMediaInfo.getFileName());
-        file.createNewFile();
-        FileOutputStream fileOutputStream = new FileOutputStream(file);
-
-
-        LoadingMediaInfo progressValue = new LoadingMediaInfo();
-        progressValue.setFileName(sendMediaInfo.getFileName());
-        progressValue.setFileLength(sendMediaInfo.getFileLength());
-        progressValue.setLoadingLength(0L);
-        loadingProgress.postValue(progressValue);
-
-        byte[] buffer = new byte[1024];
-        int len;
-        while ((len = inputStream.read(buffer)) != -1) {
-            fileOutputStream.write(buffer, 0, len);
-
-            progressValue.setLoadingLength(progressValue.getLoadingLength() + len);
-            loadingProgress.postValue(progressValue);
-        }
-
-
-
-        fileOutputStream.close();
-        inputStream.close();
-        client.close();
-        client = null;
-        serverSocket.close();
-        serverSocket = null;
-    }
-
-    public void onDirSelected(String path, boolean startServer) {
-        if (disposableServerSocket != null) {
-            stopServerSocket();
-        }
-
-        File dir = new File(path);
-        dir.mkdirs();
-
-        if (dir.exists()) {
-            selectedDir.postValue(dir);
-            preferences.setLastDir(path);
-            serverStatus.postValue(ServerStatus.STOPPED);
-
-            if (startServer)
-                startServerSocket();
-        }
-    }
-
-
-    public void toggleServerWork() {
-        if (disposableServerSocket != null) {
-            stopServerSocket();
-        } else {
-            startServerSocket();
         }
     }
 }

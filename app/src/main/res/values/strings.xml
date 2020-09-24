@@ -3,8 +3,8 @@
     <string name="start_button_mode_client">Client</string>
     <string name="start_button_mode_server">Server</string>
     <string name="start_label_select_mode">Select Mode:</string>
-    <string name="server_title">Server (Receive media)</string>
-    <string name="client_title">Client (Send media)</string>
+    <string name="server_title">Server</string>
+    <string name="client_title">Client</string>
     <string name="update_visibility">Update Visibility</string>
     <string name="rationale_write_external">Access to external storage is required. Go to Settings and enable it</string>
     <string name="settings">Settings</string>
@@ -15,14 +15,20 @@
     <string name="error_validation_incorrect_host_address">Incorrect host address. Should be as XXX.XXX.XXX.XXX in decimal</string>
     <string name="alert_ok">OK</string>
     <string name="server_ip">Server IP</string>
-    <string name="select_image">Select Image</string>
-    <string name="select_video">Select Video</string>
+    <string name="select_image">Add Image</string>
+    <string name="select_video">Add Video</string>
     <string name="current_ip">Current ip: %s</string>
     <string name="select_dir">Select Dir</string>
     <string name="server_status_dir_not_selected">Dir not selected</string>
     <string name="server_status_wait_for_data">Wait for client</string>
-    <string name="server_status_stopped">Stopped</string>
+    <string name="server_status_disconnected">Disconnect</string>
     <string name="server_status_loading">Loading</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
+    <string name="connect">Connect</string>
+    <string name="clear_selection">Clear Media</string>
+    <string name="transfer">Transfer</string>
+    <string name="server_status_downloading">Downloading</string>
+    <string name="server_status_uploading">Uploading</string>
+    <string name="server_status_connected">Connected</string>
 </resources>

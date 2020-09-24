@@ -1,69 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".client.ClientActivity">
+    android:overScrollMode="never"
+    android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/editText"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:hint="@string/server_ip"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:padding="@dimen/spacing8"
+        android:orientation="vertical">
 
+        <include layout="@layout/part_status" />
 
-    <Button
-        android:id="@+id/conect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="Send"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/select_video" />
+        <include layout="@layout/part_client" />
 
-    <Button
-        android:id="@+id/select_video"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="@string/select_video"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/selected_media" />
+        <include layout="@layout/part_directory" />
 
-    <Button
-        android:id="@+id/select_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="@string/select_image"
-        app:layout_constraintBottom_toBottomOf="@+id/select_video"
-        app:layout_constraintStart_toEndOf="@+id/select_video"
-        app:layout_constraintTop_toTopOf="@+id/select_video" />
+        <include layout="@layout/part_media" />
 
-    <TextView
-        android:id="@+id/selected_media"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/editText"
-        app:layout_constraintTop_toBottomOf="@+id/editText"
-        tools:text="ssefesfef" />
+    </LinearLayout>
 
-
-    <!--    <androidx.recyclerview.widget.RecyclerView-->
-    <!--        android:id="@+id/available_peers"-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="200dp"-->
-    <!--        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintStart_toStartOf="parent"-->
-    <!--        app:layout_constraintTop_toBottomOf="@+id/include" />-->
-
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

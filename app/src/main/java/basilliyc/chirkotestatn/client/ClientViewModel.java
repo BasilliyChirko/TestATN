@@ -1,21 +1,12 @@
 package basilliyc.chirkotestatn.client;
 
-import android.content.Context;
-import android.net.Uri;
-
-import androidx.lifecycle.MutableLiveData;
-
-import com.google.gson.Gson;
-
 import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+import java.net.SocketException;
 
 import basilliyc.chirkotestatn.Constants;
 import basilliyc.chirkotestatn.base.BaseWorkViewModel;
-import basilliyc.chirkotestatn.entity.SendMediaInfo;
+import basilliyc.chirkotestatn.server.SocketStatus;
 import basilliyc.chirkotestatn.utils.Error;
 import basilliyc.chirkotestatn.utils.Utils;
 import io.reactivex.Completable;
@@ -28,26 +19,27 @@ import io.reactivex.schedulers.Schedulers;
 
 public class ClientViewModel extends BaseWorkViewModel {
 
-    public MutableLiveData<File> selectedMedia = new MutableLiveData<>();
-
-    public Disposable disposableSend;
-
     public String getLastIp() {
         return preferences.getLastSendIp();
     }
 
-    public void sendMedia(final String host, final Context context) {
+    public void connectToServer(final String host) {
+        disconnectSocket();
         preferences.setLastSendIp(host);
 
-        final File value = selectedMedia.getValue();
-
-        if (value == null) {
-            onError(new Throwable(Error.FILE_NOT_SELECTED));
+        File dir = selectedDir.getValue();
+        if (dir == null) {
+            onError(new Throwable(Error.DIR_NOT_SELECTED));
+            socketStatus.postValue(SocketStatus.DISCONNECTED);
             return;
         }
 
-        if (!value.exists()) {
-            onError(new Throwable(Error.FILE_NOT_EXISTS));
+        dir.mkdirs();
+
+        if (!dir.exists()) {
+            onError(new Throwable(Error.DIR_NOT_EXISTS));
+            selectedDir.postValue(null);
+            socketStatus.postValue(SocketStatus.DISCONNECTED);
             return;
         }
 
@@ -55,11 +47,15 @@ public class ClientViewModel extends BaseWorkViewModel {
             @Override
             public void subscribe(CompletableEmitter emitter) throws Exception {
                 try {
-                    processMedia(host, value, context);
-                    emitter.onComplete();
+                    Socket socket = new Socket(host, Constants.SOCKET_PORT);
+                    onDeviceConnected(socket);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
-                    emitter.onError(throwable);
+                    if (throwable instanceof SocketException && "Socket closed".equals(throwable.getMessage())) {
+                        disconnectSocket();
+                    } else {
+                        emitter.onError(throwable);
+                    }
                 }
             }
         })
@@ -68,69 +64,30 @@ public class ClientViewModel extends BaseWorkViewModel {
                 .subscribe(new CompletableObserver() {
                     @Override
                     public void onSubscribe(Disposable d) {
-                        disposableSend = d;
+                        disposableSocket = d;
                         compositeDisposable.add(d);
                     }
 
                     @Override
                     public void onComplete() {
-                        //TODO
-                        Utils.log("sef");
+                        Utils.log("onComplete will never execute");
                     }
 
                     @Override
                     public void onError(Throwable e) {
+                        disconnectSocket();
                         ClientViewModel.this.onError(e);
                     }
                 })
         ;
-    }
-
-    private void processMedia(String host, File file, Context context) throws Throwable {
-        Socket socket = new Socket(host, Constants.SOCKET_PORT);
-
-        OutputStream outputStream = socket.getOutputStream();
-
-        SendMediaInfo sendMediaInfo = new SendMediaInfo();
-        sendMediaInfo.setFileName(file.getName());
-        sendMediaInfo.setFileLength(file.length());
-
-        Gson gson = new Gson();
-        String s = gson.toJson(sendMediaInfo);
-        outputStream.write(s.getBytes(StandardCharsets.UTF_8));
-        outputStream.flush();
-
-        byte buf[] = new byte[1024];
-        int len;
-
-        InputStream streamFromFile = context.getContentResolver().openInputStream(Uri.fromFile(file));
-        if (streamFromFile == null) {
-            throw new Throwable(Error.FILE_ERROR_OPEN_STREAM);
-        }
-        while ((len = streamFromFile.read(buf)) != -1) {
-            outputStream.write(buf, 0, len);
-        }
-        outputStream.close();
-        streamFromFile.close();
-
-        outputStream.close();
-    }
-
-
-    public void stopSendMedia() {
-        if (disposableSend != null && !disposableSend.isDisposed()) {
-            disposableSend.dispose();
-        }
-        disposableSend = null;
-    }
-
-    public void onMediaSelected(String path) {
-        Utils.log(path);
-        File file = new File(path);
-        if (file.exists()) {
-            selectedMedia.postValue(file);
-        }
 
     }
 
+    public void toggleConnection(String host) {
+        if (disposableSocket != null) {
+            disconnectSocket();
+        } else {
+            connectToServer(host);
+        }
+    }
 }
